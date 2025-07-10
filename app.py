@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Request
+from fastapi import FastAPI, APIRouter, Request
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import yfinance as yf
 from collections import defaultdict
@@ -6,6 +7,7 @@ from datetime import datetime
 
 app = FastAPI()
 
+# CORS setup
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,13 +15,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/price")
+# Routers
+router = APIRouter()
+
+@router.get("/price")
 def get_price(symbol: str):
     ticker = yf.Ticker(symbol)
     price = ticker.info.get("regularMarketPrice", 0)
     return { "symbol": symbol.upper(), "price": price }
 
-@history_router.post("/portfolio-history")
+
+@router.post("/portfolio-history")
 async def portfolio_history(request: Request):
     body = await request.json()
 
@@ -52,3 +58,6 @@ async def portfolio_history(request: Request):
     }
 
     return [output]
+
+# Include routes
+app.include_router(router)
